@@ -25,6 +25,8 @@ const BUILD_MODULES: ModuleId[] = [
   'ecosystem',
 ]
 
+// Sequential prerequisite map. Note: BUILD modules (website onward) also require
+// refineComplete to be true — that gate is enforced separately in computeModuleStatuses.
 const UNLOCK_RULES: Record<ModuleId, ModuleId | null> = {
   lean_canvas: null,
   validation: 'lean_canvas',
@@ -55,6 +57,7 @@ export function computeProgress(modules: ModuleState[]): {
 }
 
 export function computeModuleStatuses(modules: ModuleState[]): ModuleState[] {
+  // Output iterates the known module order. Modules with unrecognised IDs in the input are not included.
   const statusMap = new Map(modules.map(m => [m.module_id, m.status]))
   const refineComplete = REFINE_MODULES.every(id => statusMap.get(id) === 'completed')
 

@@ -1,3 +1,5 @@
+import type { ModuleId } from '@/lib/state-machine'
+
 export interface Project {
   id: string
   user_id: string
@@ -13,7 +15,7 @@ export interface Project {
 export interface ModuleOutput {
   id: string
   project_id: string
-  module_id: string
+  module_id: ModuleId
   status: 'locked' | 'available' | 'completed'
   output: Record<string, unknown> | null
   updated_at: string
