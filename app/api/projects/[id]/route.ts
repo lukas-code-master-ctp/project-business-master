@@ -16,6 +16,7 @@ export async function GET(
     .from('projects')
     .select('*, module_outputs(*)')
     .eq('id', id)
+    .eq('user_id', user.id)
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 })
@@ -33,11 +34,28 @@ export async function PATCH(
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json()
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+
+  const patch: Record<string, unknown> = {}
+  if (body && typeof body === 'object' && !Array.isArray(body)) {
+    const b = body as Record<string, unknown>
+    if (typeof b.name === 'string' && b.name.trim()) patch.name = b.name.trim()
+    if (typeof b.idea === 'string' && b.idea.trim()) patch.idea = b.idea.trim()
+  }
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
+
   const { data, error } = await supabase
     .from('projects')
-    .update({ ...body, updated_at: new Date().toISOString() })
+    .update({ ...patch, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('user_id', user.id)
     .select()
     .single()
 
