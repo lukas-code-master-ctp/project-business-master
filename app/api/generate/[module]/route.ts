@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateModuleOutput, type RefineModuleId } from '@/lib/ai-orchestrator'
+import { generateModuleOutput, type SupportedModuleId } from '@/lib/ai-orchestrator'
 
-const VALID_REFINE_MODULES = new Set<string>([
+const VALID_MODULE_IDS = new Set<string>([
   'lean_canvas',
   'validation',
   'brand',
   'outreach',
+  'website',
+  'mvp_requirements',
+  'mvp_builder',
+  'business_toolkit',
+  'ecosystem',
 ])
 
 export async function POST(
@@ -15,7 +20,7 @@ export async function POST(
 ) {
   const { module: moduleId } = await params
 
-  if (!VALID_REFINE_MODULES.has(moduleId)) {
+  if (!VALID_MODULE_IDS.has(moduleId)) {
     return NextResponse.json({ error: 'Módulo no válido' }, { status: 400 })
   }
 
@@ -33,12 +38,11 @@ export async function POST(
     wizardAnswers?: Record<string, unknown>
   }
 
-  if (!body.projectId || !body.wizardAnswers) {
-    return NextResponse.json(
-      { error: 'projectId y wizardAnswers son requeridos' },
-      { status: 400 }
-    )
+  if (!body.projectId) {
+    return NextResponse.json({ error: 'projectId es requerido' }, { status: 400 })
   }
+
+  const wizardAnswers = body.wizardAnswers ?? {}
 
   // Ownership check — defense-in-depth alongside RLS
   const { data: project, error: projectError } = await supabase
@@ -68,9 +72,9 @@ export async function POST(
 
   try {
     const output = await generateModuleOutput({
-      moduleId: moduleId as RefineModuleId,
+      moduleId: moduleId as SupportedModuleId,
       idea: project.idea,
-      wizardAnswers: body.wizardAnswers,
+      wizardAnswers,
       previousOutputs,
     })
     return NextResponse.json({ output })
