@@ -4,11 +4,17 @@ import { buildLeanCanvasPrompts } from '@/lib/prompts/lean-canvas'
 import { buildValidationPrompts } from '@/lib/prompts/validation'
 import { buildBrandPrompts } from '@/lib/prompts/brand'
 import { buildOutreachPrompts } from '@/lib/prompts/outreach'
+import { buildWebsitePrompts } from '@/lib/prompts/website'
+import { buildMvpRequirementsPrompts } from '@/lib/prompts/mvp-requirements'
+import { buildMvpBuilderPrompts } from '@/lib/prompts/mvp-builder'
+import { buildBusinessToolkitPrompts } from '@/lib/prompts/business-toolkit'
+import { buildEcosystemPrompts } from '@/lib/prompts/ecosystem'
 
 export type RefineModuleId = Extract<ModuleId, 'lean_canvas' | 'validation' | 'brand' | 'outreach'>
+export type SupportedModuleId = ModuleId
 
 export interface GenerateParams {
-  moduleId: RefineModuleId
+  moduleId: SupportedModuleId
   idea: string
   wizardAnswers: Record<string, unknown>
   previousOutputs: Record<string, Record<string, unknown>>
@@ -28,6 +34,16 @@ function buildPrompts(params: GenerateParams): { system: string; user: string } 
       return buildBrandPrompts(idea, wizardAnswers, leanCanvas)
     case 'outreach':
       return buildOutreachPrompts(idea, wizardAnswers, leanCanvas, brand)
+    case 'website':
+      return buildWebsitePrompts(idea, previousOutputs)
+    case 'mvp_requirements':
+      return buildMvpRequirementsPrompts(idea, wizardAnswers, previousOutputs)
+    case 'mvp_builder':
+      return buildMvpBuilderPrompts(idea, previousOutputs)
+    case 'business_toolkit':
+      return buildBusinessToolkitPrompts(idea, wizardAnswers, previousOutputs)
+    case 'ecosystem':
+      return buildEcosystemPrompts(idea, previousOutputs)
   }
 }
 

@@ -90,4 +90,51 @@ describe('generateModuleOutput', () => {
     expect(callArgs.messages[0].content).toContain('Trazabilidad real')
     expect(callArgs.messages[0].content).toContain('El marketplace de confianza')
   })
+
+  it('routes website module and passes all previousOutputs', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: '{"hero_headline": "El sabor del campo directo a tu mesa"}' }],
+    })
+    await generateModuleOutput({
+      moduleId: 'website',
+      idea: 'Marketplace orgánico',
+      wizardAnswers: {},
+      previousOutputs: {
+        lean_canvas: { unique_value: 'Trazabilidad real' },
+        brand: { positioning: 'Confianza del productor' },
+        outreach: { elevator_pitch: { version_30s: 'Pitch corto' } },
+      },
+    })
+    const callArgs = mockCreate.mock.calls[0][0]
+    expect(callArgs.messages[0].content).toContain('Trazabilidad real')
+    expect(callArgs.messages[0].content).toContain('Confianza del productor')
+  })
+
+  it('routes mvp_requirements module and passes wizardAnswers', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: '{"mvp_description": "Plataforma de trazabilidad"}' }],
+    })
+    await generateModuleOutput({
+      moduleId: 'mvp_requirements',
+      idea: 'Marketplace orgánico',
+      wizardAnswers: { core_feature: 'Trazabilidad en tiempo real' },
+      previousOutputs: { lean_canvas: { problem: 'Distribución opaca' } },
+    })
+    const callArgs = mockCreate.mock.calls[0][0]
+    expect(callArgs.messages[0].content).toContain('Trazabilidad en tiempo real')
+  })
+
+  it('routes ecosystem module and passes lean_canvas output', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: '{"sector_overview": "Agtech en Chile crece un 20% anual"}' }],
+    })
+    await generateModuleOutput({
+      moduleId: 'ecosystem',
+      idea: 'Marketplace orgánico',
+      wizardAnswers: {},
+      previousOutputs: { lean_canvas: { customer_segments: 'Productores del Maule' } },
+    })
+    const callArgs = mockCreate.mock.calls[0][0]
+    expect(callArgs.messages[0].content).toContain('Productores del Maule')
+  })
 })
