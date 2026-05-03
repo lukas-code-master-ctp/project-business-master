@@ -24,3 +24,9 @@ export interface ModuleOutput {
 export interface ProjectWithModules extends Project {
   module_outputs: ModuleOutput[]
 }
+
+export interface WizardQuestion {
+  id: string
+  label: string
+  placeholder: string
+}
