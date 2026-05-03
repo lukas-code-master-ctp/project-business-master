@@ -63,11 +63,16 @@ export function ModulePageClient({
     const updated = { ...output, [key]: value }
     setOutput(updated)
 
-    await fetch(`/api/projects/${project.id}/modules/${moduleId}`, {
+    const res = await fetch(`/api/projects/${project.id}/modules/${moduleId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ output: updated }),
     })
+
+    if (!res.ok) {
+      const data = (await res.json()) as { error?: string }
+      setError(data.error ?? 'Error al guardar celda')
+    }
   }
 
   async function handleConfirm() {
@@ -86,6 +91,7 @@ export function ModulePageClient({
       return
     }
 
+    setConfirming(false)
     router.push(`/projects/${project.id}`)
     router.refresh()
   }
