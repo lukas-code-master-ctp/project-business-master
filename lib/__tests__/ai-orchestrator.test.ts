@@ -1,13 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const { mockCreate } = vi.hoisted(() => ({
   mockCreate: vi.fn(),
 }))
 
 vi.mock('@anthropic-ai/sdk', () => ({
-  default: vi.fn(() => ({
-    messages: { create: mockCreate },
-  })),
+  default: class {
+    constructor(config: { apiKey: string }) {}
+    messages = { create: mockCreate }
+  },
 }))
 
 import { generateModuleOutput } from '@/lib/ai-orchestrator'
@@ -15,6 +16,11 @@ import { generateModuleOutput } from '@/lib/ai-orchestrator'
 describe('generateModuleOutput', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    process.env.ANTHROPIC_API_KEY = 'test-key'
+  })
+
+  afterEach(() => {
+    delete process.env.ANTHROPIC_API_KEY
   })
 
   it('returns parsed JSON from Claude response', async () => {
@@ -36,6 +42,13 @@ describe('generateModuleOutput', () => {
     })
     const result = await generateModuleOutput({ moduleId: 'lean_canvas', idea: 'Test', wizardAnswers: {}, previousOutputs: {} })
     expect(result).toEqual({ key: 'value' })
+  })
+
+  it('throws when ANTHROPIC_API_KEY is not set', async () => {
+    delete process.env.ANTHROPIC_API_KEY
+    await expect(
+      generateModuleOutput({ moduleId: 'lean_canvas', idea: 'Test', wizardAnswers: {}, previousOutputs: {} })
+    ).rejects.toThrow('ANTHROPIC_API_KEY not configured')
   })
 
   it('throws when response has no text block', async () => {

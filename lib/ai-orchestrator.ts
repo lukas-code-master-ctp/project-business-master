@@ -34,24 +34,21 @@ function buildPrompts(params: GenerateParams): { system: string; user: string } 
 function extractJson(text: string): Record<string, unknown> {
   const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
   const jsonString = codeBlockMatch ? codeBlockMatch[1] : text
-  return JSON.parse(jsonString.trim()) as Record<string, unknown>
+  const parsed: unknown = JSON.parse(jsonString.trim())
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('Claude response was not a JSON object')
+  }
+  return parsed as Record<string, unknown>
 }
 
-type AnthropicFactory = (config: { apiKey: string }) => Anthropic
-
-function createClient(): Anthropic {
+export async function generateModuleOutput(params: GenerateParams): Promise<Record<string, unknown>> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY not configured')
   }
-  // Cast to factory signature to support both `new` (production) and plain call (test mocks)
-  const AnthropicClient = Anthropic as unknown as AnthropicFactory
-  return AnthropicClient({ apiKey })
-}
 
-export async function generateModuleOutput(params: GenerateParams): Promise<Record<string, unknown>> {
-  const client = createClient()
   const { system, user } = buildPrompts(params)
+  const client = new Anthropic({ apiKey })
 
   const message = await client.messages.create({
     model: 'claude-opus-4-5',
