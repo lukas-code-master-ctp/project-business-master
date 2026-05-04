@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { WizardQuestion, Project, ModuleOutput } from '@/lib/types'
-import type { RefineModuleId } from '@/lib/ai-orchestrator'
+import type { SupportedModuleId } from '@/lib/ai-orchestrator'
 import { AdvisorWizard } from './AdvisorWizard'
 import { GeneratingModal } from './GeneratingModal'
 import { OutputGrid } from './OutputGrid'
@@ -10,10 +10,11 @@ import { OutputGrid } from './OutputGrid'
 interface ModulePageClientProps {
   project: Project
   moduleOutput: ModuleOutput
-  moduleId: RefineModuleId
+  moduleId: SupportedModuleId
   moduleName: string
   wizardQuestions: WizardQuestion[]
   outputLabels: Record<string, string>
+  phase?: 'REFINE' | 'BUILD'
 }
 
 type Step = 'wizard' | 'generating' | 'output'
@@ -25,6 +26,7 @@ export function ModulePageClient({
   moduleName,
   wizardQuestions,
   outputLabels,
+  phase = 'REFINE',
 }: ModulePageClientProps) {
   const router = useRouter()
 
@@ -36,6 +38,7 @@ export function ModulePageClient({
   )
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [directGenerating, setDirectGenerating] = useState(false)
 
   async function handleWizardComplete(answers: Record<string, string>) {
     setStep('generating')
@@ -51,12 +54,14 @@ export function ModulePageClient({
       const data = (await res.json()) as { error?: string }
       setError(data.error ?? 'Error generando output')
       setStep('wizard')
+      setDirectGenerating(false)
       return
     }
 
     const data = (await res.json()) as { output: Record<string, unknown> }
     setOutput(data.output)
     setStep('output')
+    setDirectGenerating(false)
   }
 
   async function handleSaveCell(key: string, value: string) {
@@ -101,10 +106,14 @@ export function ModulePageClient({
     setStep('wizard')
   }
 
+  const noWizard = wizardQuestions.length === 0
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <span className="font-mono text-xs text-gray-400">{project.name} / REFINE</span>
+        <span className="font-mono text-xs text-gray-400">
+          {project.name} / {phase}
+        </span>
         <h1 className="font-syne font-bold text-3xl text-gray-900 mt-1">{moduleName}</h1>
       </div>
 
@@ -114,7 +123,25 @@ export function ModulePageClient({
         </div>
       )}
 
-      {step === 'wizard' && (
+      {step === 'wizard' && noWizard && (
+        <div className="flex flex-col items-center gap-6 py-16">
+          <p className="font-outfit text-gray-500 text-center max-w-md">
+            Nuestro asesor de IA analizará toda la información de tu proyecto para generar este módulo automáticamente.
+          </p>
+          <button
+            onClick={() => {
+              setDirectGenerating(true)
+              void handleWizardComplete({})
+            }}
+            disabled={directGenerating}
+            className="px-8 py-3 rounded-xl bg-blue-600 text-white font-outfit font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {directGenerating ? 'Generando...' : 'Generar con IA →'}
+          </button>
+        </div>
+      )}
+
+      {step === 'wizard' && !noWizard && (
         <AdvisorWizard
           questions={wizardQuestions}
           onComplete={handleWizardComplete}
