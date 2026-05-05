@@ -2,7 +2,7 @@ import { CHILE_CONTEXT } from '@/lib/chile-context'
 
 export function buildOutreachPrompts(
   idea: string,
-  wizardAnswers: Record<string, string>,
+  wizardAnswers: Record<string, unknown>,
   leanCanvasOutput: Record<string, unknown>,
   brandOutput: Record<string, unknown>
 ): { system: string; user: string } {

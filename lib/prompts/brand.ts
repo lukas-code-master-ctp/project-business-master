@@ -2,7 +2,7 @@ import { CHILE_CONTEXT } from '@/lib/chile-context'
 
 export function buildBrandPrompts(
   idea: string,
-  wizardAnswers: Record<string, string>,
+  wizardAnswers: Record<string, unknown>,
   leanCanvasOutput: Record<string, unknown>
 ): { system: string; user: string } {
   const system = `Eres un estratega de marca especializado en startups latinoamericanas y el mercado chileno.

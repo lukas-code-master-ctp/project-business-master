@@ -2,7 +2,7 @@ import { CHILE_CONTEXT } from '@/lib/chile-context'
 
 export function buildValidationPrompts(
   idea: string,
-  wizardAnswers: Record<string, string>,
+  wizardAnswers: Record<string, unknown>,
   leanCanvasOutput: Record<string, unknown>
 ): { system: string; user: string } {
   const system = `Eres un experto en customer discovery y validación de startups en el mercado chileno.

@@ -55,6 +55,11 @@ describe('buildBrandPrompts', () => {
     expect(user).toContain('Trazabilidad real del productor')
     expect(user).toContain('cercano y auténtico')
   })
+
+  it('includes CHILE_CONTEXT in system prompt', () => {
+    const { system } = buildBrandPrompts('Test', {}, {})
+    expect(system).toContain('CONTEXTO CHILE')
+  })
 })
 
 describe('buildOutreachPrompts', () => {
@@ -70,5 +75,10 @@ describe('buildOutreachPrompts', () => {
     expect(user).toContain('Trazabilidad real')
     expect(user).toContain('El marketplace de confianza para Chile')
     expect(user).toContain('WhatsApp Business')
+  })
+
+  it('includes CHILE_CONTEXT in system prompt', () => {
+    const { system } = buildOutreachPrompts('Test', {}, {}, {})
+    expect(system).toContain('CONTEXTO CHILE')
   })
 })

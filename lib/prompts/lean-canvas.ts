@@ -2,7 +2,7 @@ import { CHILE_CONTEXT } from '@/lib/chile-context'
 
 export function buildLeanCanvasPrompts(
   idea: string,
-  wizardAnswers: Record<string, string>
+  wizardAnswers: Record<string, unknown>
 ): { system: string; user: string } {
   const system = `Eres un experto en metodología Lean Startup especializado en el mercado chileno.
 Generas Lean Canvas estructurados, específicos y accionables.
