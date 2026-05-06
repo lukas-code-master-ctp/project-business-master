@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
   const router = useRouter()
 
   async function handleRegister(e: React.FormEvent) {
@@ -20,14 +21,21 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({ email, password })
     if (error) {
       setError(error.message)
       setLoading(false)
       return
     }
-    router.push('/dashboard')
-    router.refresh()
+    // Si la sesión viene de inmediato, la confirmación está desactivada
+    if (data.session) {
+      router.push('/dashboard')
+      router.refresh()
+      return
+    }
+    // Si no hay sesión, Supabase envió un email de confirmación
+    setSuccess(true)
+    setLoading(false)
   }
 
   return (
@@ -37,6 +45,11 @@ export default function RegisterPage() {
         <p className="font-outfit text-gray-500 mb-8">
           Empieza a construir tu startup con IA
         </p>
+        {success && (
+          <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-outfit">
+            ✅ Cuenta creada. Revisa tu email y confirma tu cuenta para ingresar.
+          </div>
+        )}
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
             <label className="block text-sm font-outfit font-medium text-gray-700 mb-1">
