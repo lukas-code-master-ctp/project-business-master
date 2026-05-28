@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import type { ModuleId } from '@/lib/state-machine'
 import { buildLeanCanvasPrompts } from '@/lib/prompts/lean-canvas'
 import { buildValidationPrompts } from '@/lib/prompts/validation'
@@ -19,6 +19,14 @@ export interface GenerateParams {
   wizardAnswers: Record<string, unknown>
   previousOutputs: Record<string, Record<string, unknown>>
 }
+
+// Default model — override via AI_MODEL env var to test others
+// Recommended choices for quick comparison:
+//   - anthropic/claude-3.5-sonnet       (best overall quality)
+//   - openai/gpt-4o                     (strong alternative)
+//   - google/gemini-2.0-flash-exp:free  (free during beta)
+//   - deepseek/deepseek-chat            (ultra cheap, decent quality)
+const DEFAULT_MODEL = 'anthropic/claude-3.5-sonnet'
 
 function buildPrompts(params: GenerateParams): { system: string; user: string } {
   const { moduleId, idea, wizardAnswers, previousOutputs } = params
@@ -52,31 +60,44 @@ function extractJson(text: string): Record<string, unknown> {
   const jsonString = codeBlockMatch ? codeBlockMatch[1] : text
   const parsed: unknown = JSON.parse(jsonString.trim())
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    throw new Error('Claude response was not a JSON object')
+    throw new Error('AI response was not a JSON object')
   }
   return parsed as Record<string, unknown>
 }
 
-export async function generateModuleOutput(params: GenerateParams): Promise<Record<string, unknown>> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+export async function generateModuleOutput(
+  params: GenerateParams
+): Promise<Record<string, unknown>> {
+  const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY not configured')
+    throw new Error('OPENROUTER_API_KEY not configured')
   }
 
+  const model = process.env.AI_MODEL ?? DEFAULT_MODEL
   const { system, user } = buildPrompts(params)
-  const client = new Anthropic({ apiKey })
 
-  const message = await client.messages.create({
-    model: 'claude-opus-4-5',
-    max_tokens: 4096,
-    system,
-    messages: [{ role: 'user', content: user }],
+  const client = new OpenAI({
+    apiKey,
+    baseURL: 'https://openrouter.ai/api/v1',
+    defaultHeaders: {
+      'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://emprendecl.app',
+      'X-Title': 'EmprendeCL',
+    },
   })
 
-  const textBlock = message.content.find(block => block.type === 'text')
-  if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('Claude returned no text content')
+  const completion = await client.chat.completions.create({
+    model,
+    max_tokens: 4096,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+  })
+
+  const content = completion.choices[0]?.message?.content
+  if (!content) {
+    throw new Error('AI returned no text content')
   }
 
-  return extractJson(textBlock.text)
+  return extractJson(content)
 }

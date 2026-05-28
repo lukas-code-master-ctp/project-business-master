@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EmprendeCL
 
-## Getting Started
+Plataforma de emprendimiento asistida por IA, enfocada en el ecosistema chileno (CORFO, SERCOTEC, SpA, MercadoPago, etc.).
 
-First, run the development server:
+## Stack
+
+- **Next.js 14** (App Router) — frontend + API routes
+- **Supabase** — auth + Postgres + RLS
+- **OpenRouter** — proveedor unificado de modelos IA (Claude, GPT-4, Gemini, DeepSeek, etc.)
+- **Tailwind CSS** — estilos
+- **Vitest** — tests unitarios
+
+## Setup local
 
 ```bash
+cp .env.example .env.local
+# edita .env.local con tus claves
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables de entorno
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Ver `.env.example`. Las requeridas son:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Para qué |
+|----------|----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL de tu proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key de Supabase |
+| `OPENROUTER_API_KEY` | API key de OpenRouter ([crear aquí](https://openrouter.ai/keys)) |
+| `AI_MODEL` *(opcional)* | Modelo a usar — ver opciones abajo |
 
-## Learn More
+## Cambiar de modelo IA
 
-To learn more about Next.js, take a look at the following resources:
+Para probar diferentes modelos, edita `AI_MODEL` en `.env.local` o Vercel:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Mejor calidad
+AI_MODEL=anthropic/claude-3.5-sonnet
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Alternativas fuertes
+AI_MODEL=openai/gpt-4o
+AI_MODEL=anthropic/claude-3.7-sonnet
 
-## Deploy on Vercel
+# Económico para testing
+AI_MODEL=deepseek/deepseek-chat
+AI_MODEL=google/gemini-2.0-flash-exp:free
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Ver el [catálogo completo de OpenRouter](https://openrouter.ai/models).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Migraciones de DB
+
+Las migraciones SQL están en `supabase/migrations/`. Ejecútalas en orden desde el SQL Editor de Supabase.
+
+## Tests
+
+```bash
+npm test           # corre todos los tests
+npx vitest         # watch mode
+```
+
+## Deploy
+
+Configurado para Vercel. Solo agrega las variables de entorno y conecta el repo.
